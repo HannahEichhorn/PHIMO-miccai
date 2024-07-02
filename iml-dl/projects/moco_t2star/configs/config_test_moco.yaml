@@ -1,0 +1,119 @@
+name: ReconRandomMasks-MSE_SQ-struct-00-test
+train_batch_size: &tbatch_size 4
+select_echo: &select_echo False
+random_mask: &random_mask ["Random", 0.5, 10]
+var_acc_rate: &var_acc_rate [0.05, 0.51]  # or "None" for constant acceleration rate
+select_one_scan: &select_one_scan "SQ-struct-00"
+recon_model_params: &recon_model_params
+  # trained reconstruction model for random masks
+  hyper_setup: False
+  weights: './weights/recon/random_masks_best_model.pt'
+  module_name: model_zoo.unrolled_recon
+  class_name: ComplexUnrolledNetwork
+  params:
+    nr_iterations: 5
+    dc_method: "GD"
+    denoiser_method: "Real2chCNN"
+    weight_sharing: False
+    select_echo: *select_echo
+    nr_filters: 64
+    kernel_size: 3
+    nr_layers: 5
+    activation: "relu"
+data_loader: &data_loader
+  module_name: data.t2star_loader
+  class_name: RawMotionT2starLoader
+  params:
+    args:
+      batch_size: *tbatch_size
+      data_dir:
+        train: './data/links_to_data/recon_test_motion_WS/'
+        test: './data/links_to_data/recon_test_motion_WS/'
+      only_brainmask_slices: True
+      bm_thr: 0.1
+      normalize: "abs_image"
+      select_echo: *select_echo
+      random_mask: *random_mask
+      var_acc_rate: *var_acc_rate
+      select_one_scan: *select_one_scan
+      drop_last: False
+      min_slice_nr:
+        SQ-struct-33: 13
+        SQ-struct-38: 12
+        SQ-struct-39: 15
+        SQ-struct-43: 14
+        SQ-struct-45: 14
+        SQ-struct-46: 10
+        SQ-struct-00: 12
+        default: 14
+#
+# Experiment
+#
+experiment:
+  name: MoCoT2star_Optim_MICCAI-Submission
+  task: train
+  weights:
+#
+device: gpu
+configurator:
+  module_name: core.Configurator
+  class_name: DLConfigurator
+  params:
+#
+# Model
+#
+model:
+  hyper_setup: False
+  module_name: model_zoo.mlp
+  class_name: MLP
+  params:
+      input_size: 1
+      output_size: 92
+      hidden_sizes: [23, 46]
+      input_embedding: True
+      init_bias_last_layer: 2
+#
+# Trainer
+#
+trainer:
+  module_name: projects.moco_t2star.trainer
+  class_name: PTrainer
+  params:
+    checkpoint_path: './weights/recon/'   # adapt to directory where weights should be saved
+    nr_epochs: 500
+    patience:  50
+    wandb_log_gradients: False
+    search_initial_mask: False
+    early_stop_regularisation: True
+    # Losses
+    physics_loss:
+      module_name: optim.losses.physics_losses
+      class_name: ModelFitError
+      params:
+        mask_image: True
+        error_type: "emp_corr"
+      lambda: 1.0
+    reg_loss:
+      module_name: optim.losses.regularisation
+      class_name: MaskVariabilityAcrossSlices
+      params:
+      lambda: 0.1
+    optimizer: "adam"
+    optimizer_params:
+      lr: 1.0e-3
+    recon_model: *recon_model_params
+  data_loader: *data_loader
+#
+# Downstream tasks
+#
+downstream_tasks:
+  T2StarMotionCorrection:
+    module_name: projects.moco_t2star.downstream_evaluator
+    class_name: PDownstreamEvaluator
+    checkpoint_path: './downstream_results/recon/'   # adapt to directory where downstream_results should be saved
+    params:
+      task: "moco"
+      include_brainmask: True
+      recon_model_params: *recon_model_params
+      save_predictions: True
+    data_loader: *data_loader

@@ -1,0 +1,85 @@
+save_data_dict: "path_to_save_data_dictionary/data_dict.pkl"  # or "None", if the data_dict should be saved or not
+load_data_dict: "path_to_previously_saved_data_dictionary/data_dict.pkl"  # or "None", if the previously saved data_dict should be loaded or not
+save_folder: "path_to_save_results"
+select_echo: &select_echo False
+random_mask: &random_mask ["Random", 0.5, 0]
+bootstrap_mask: ["VarDensBlocks", 0.5, 3]
+var_acc_rate: &var_acc_rate [0.05, 0.51]  # or "None" for constant acceleration rate
+
+example_images:
+  SQ-struct-33: [15]
+  SQ-struct-38: [15]
+  SQ-struct-45: [18]
+  SQ-struct-00: [15, 16]
+
+downstream_dir: 'path_to_directory_with_predicted_masks/'
+subjects: 
+  # list of subjects with their corresponding run ids 
+  SQ-struct-33: 'insert_run_id_here'
+  SQ-struct-38: 'insert_run_id_here'
+  SQ-struct-39: 'insert_run_id_here'
+  SQ-struct-43: 'insert_run_id_here'
+  SQ-struct-45: 'insert_run_id_here'
+  SQ-struct-46: 'insert_run_id_here'
+  SQ-struct-00: 'insert_run_id_here'
+motion_severity:
+  SQ-struct-33: 'minor'
+  SQ-struct-38: 'stronger'
+  SQ-struct-39: 'minor'
+  SQ-struct-43: 'stronger'
+  SQ-struct-45: 'minor'
+  SQ-struct-46: 'stronger'
+  SQ-struct-00: 'stronger'
+
+data:
+  params:
+    # path to the original data (symbolic links)
+    path: '../../data/links_to_data/recon_test_motion_WS/'
+    only_bm_slices: True
+    bm_thr: 0.1
+    normalize: "abs_image"
+    select_echo: *select_echo
+    random_mask: *random_mask
+    var_acc_rate: *var_acc_rate
+    min_slice_nr:
+      SQ-struct-33: 13
+      SQ-struct-38: 12
+      SQ-struct-39: 15
+      SQ-struct-43: 14
+      SQ-struct-45: 14
+      SQ-struct-46: 10
+      SQ-struct-00: 12
+      default: 14
+
+recon_model_params:
+  # reconstruction model for random masks
+  hyper_setup: False
+  weights: '../../weights/recon/random_masks_best_model.pt'
+  module_name: model_zoo.unrolled_recon
+  class_name: ComplexUnrolledNetwork
+  params:
+    nr_iterations: 5
+    dc_method: "GD"
+    denoiser_method: "Real2chCNN"
+    weight_sharing: False
+    select_echo: *select_echo
+    nr_filters: 64
+    kernel_size: 3
+    nr_layers: 5
+    activation: "relu"
+bootstrap_recon_model_params:
+  # reconstruction model for variable density masks
+  hyper_setup: False
+  weights: '../../weights/recon/var_dens_masks_best_model.pt'
+  module_name: model_zoo.unrolled_recon
+  class_name: ComplexUnrolledNetwork
+  params:
+    nr_iterations: 5
+    dc_method: "GD"
+    denoiser_method: "Real2chCNN"
+    weight_sharing: False
+    select_echo: *select_echo
+    nr_filters: 64
+    kernel_size: 3
+    nr_layers: 5
+    activation: "relu"

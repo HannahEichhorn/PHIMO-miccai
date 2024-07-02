@@ -1,0 +1,151 @@
+name: Train_UnrolledRecon_RandomMasks
+train_batch_size: &tbatch_size 8
+downstream_batch_size: &dbatch_size 8
+select_echo: &select_echo False
+random_mask: &random_mask ["Random", 0.5, 10]
+var_acc_rate: &var_acc_rate [0.05, 0.51]  # or "None" for constant acceleration rate
+#
+# Experiment
+#
+experiment:
+  name: MoCoT2star_MICCAI-Submission
+  task: train
+  weights:
+#
+device: gpu
+configurator:
+  module_name: core.Configurator
+  class_name: DLConfigurator
+  params:
+#
+# Model
+#
+model:
+  hyper_setup: False
+  module_name: model_zoo.unrolled_recon
+  class_name: ComplexUnrolledNetwork
+  params:
+      nr_iterations: 5
+      dc_method: "GD"
+      denoiser_method: "Real2chCNN"
+      weight_sharing: False
+      partial_weight_sharing: False
+      select_echo: *select_echo
+      nr_filters: 64
+      kernel_size: 3
+      nr_layers: 5
+      activation: "relu"
+#
+# Trainer
+#
+trainer:
+  module_name: projects.recon_t2star.trainer
+  class_name: PTrainer
+  params:
+    checkpoint_path: './weights/recon/'   # adapt to directory where weights should be saved
+    nr_epochs: 4000
+    patience: 2000
+    wandb_log_gradients: False
+    loss_domain: 'I'
+    # Loss
+    loss:
+      module_name: optim.losses.ln_losses
+      class_name: RealImagL2
+      params:
+        mask_image: False
+      lambda: 1.0
+    optimizer_params:
+      lr: 1.0e-4
+  # Data Loader
+  data_loader:
+    module_name: data.t2star_loader
+    class_name: RawT2starLoader
+    params:
+      args:
+        batch_size: *tbatch_size
+        data_dir:
+          train: './data/links_to_data/recon_train_cluster/'
+          val: './data/links_to_data/recon_val_cluster/'
+          test: './data/links_to_data/recon_val_cluster/'
+        only_brainmask_slices: True
+        bm_thr: 0.1
+        normalize: "abs_image"
+        select_echo: *select_echo
+        random_mask: *random_mask
+        var_acc_rate: *var_acc_rate
+#
+# Downstream tasks
+#
+downstream_tasks:
+  T2StarReconstruction-LowExclRate:
+    module_name: projects.recon_t2star.downstream_evaluator
+    class_name: PDownstreamEvaluator
+    checkpoint_path: './downstream_results/recon/'   # adapt to directory where downstream_results should be saved
+    params:
+      task: "recon"
+      include_brainmask: True
+    data_loader:
+      module_name: data.t2star_loader
+      class_name: RawT2starLoader
+      params:
+        args:
+          batch_size: *dbatch_size
+          only_brainmask_slices: True
+          bm_thr: 0.1
+          normalize: "abs_image"
+          select_echo: *select_echo
+          random_mask: *random_mask
+          var_acc_rate: [ 0.05, 0.06 ]
+          load_whole_set: False
+      datasets:
+        val:
+          data_dir:
+            test: './data/links_to_data/recon_val_cluster/'
+  T2StarReconstruction-MediumExclRate:
+    module_name: projects.recon_t2star.downstream_evaluator
+    class_name: PDownstreamEvaluator
+    checkpoint_path: './downstream_results/recon/'   # adapt to directory where downstream_results should be saved
+    params:
+      task: "recon"
+      include_brainmask: True
+    data_loader:
+      module_name: data.t2star_loader
+      class_name: RawT2starLoader
+      params:
+        args:
+          batch_size: *dbatch_size
+          only_brainmask_slices: True
+          bm_thr: 0.1
+          normalize: "abs_image"
+          select_echo: *select_echo
+          random_mask: *random_mask
+          var_acc_rate: [ 0.3, 0.31 ]
+          load_whole_set: False
+      datasets:
+        val:
+          data_dir:
+            test: './data/links_to_data/mrecon_val_cluster/'
+  T2StarReconstruction-HighExclRate:
+    module_name: projects.recon_t2star.downstream_evaluator
+    class_name: PDownstreamEvaluator
+    checkpoint_path: './downstream_results/recon/'   # adapt to directory where downstream_results should be saved
+    params:
+      task: "recon"
+      include_brainmask: True
+    data_loader:
+      module_name: data.t2star_loader
+      class_name: RawT2starLoader
+      params:
+        args:
+          batch_size: *dbatch_size
+          only_brainmask_slices: True
+          bm_thr: 0.1
+          normalize: "abs_image"
+          select_echo: *select_echo
+          random_mask: *random_mask
+          var_acc_rate: [ 0.50, 0.51 ]
+          load_whole_set: False
+      datasets:
+        val:
+          data_dir:
+            test: './data/links_to_data/recon_val_cluster/'
