@@ -2,7 +2,7 @@
 
 **Hannah Eichhorn**, Veronika Spieker, Kerstin Hammernik, Elisa Saks, Kilian Weiss, Christine Preibisch, Julia A. Schnabel
 
-Accepted at [MICCAI 2024](https://conferences.miccai.org/2024/) | [preprint](http://arxiv.org/abs/2403.08298)
+Accepted at [MICCAI 2024](https://papers.miccai.org/miccai-2024/608-Paper1914.html) | [Link to paper](https://link.springer.com/chapter/10.1007/978-3-031-72104-5_54)
 
 
 **Abstract:** 
@@ -28,12 +28,16 @@ Reconstruction · T2* Quantification · Gradient Echo MRI
 If you use this code, please cite our arXiv paper:
 
 ```
-@misc{eichhorn2024arxiv,
-      title={Physics-Informed Deep Learning for Motion-Corrected Reconstruction of Quantitative Brain {MRI}}, 
-      author={Hannah Eichhorn and Veronika Spieker and Kerstin Hammernik and Elisa Saks and Kilian Weiss and Christine Preibisch and Julia A. Schnabel},
-      year={2024},
-      eprint={2403.08298},
-      archivePrefix={arXiv},
+@InProceedings{eichhorn2024,
+author="Eichhorn, Hannah and Spieker, Veronika and Hammernik, Kerstin and Saks, Elisa and Weiss, Kilian and Preibisch, Christine and Schnabel, Julia A.",
+editor="Linguraru, Marius George and Dou, Qi and Feragen, Aasa and Giannarou, Stamatia and Glocker, Ben and Lekadir, Karim and Schnabel, Julia A.",
+title="Physics-Informed Deep Learning for Motion-Corrected Reconstruction of Quantitative Brain MRI",
+booktitle="Medical Image Computing and Computer Assisted Intervention -- MICCAI 2024",
+year="2024",
+publisher="Springer Nature Switzerland",
+address="Cham",
+pages="562--571",
+isbn="978-3-031-72104-5"
 }
 ```
 
